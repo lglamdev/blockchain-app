@@ -37,17 +37,16 @@ export class BlockService {
         }
     }
 
-    private async createNewBlock() {
+    async createNewBlock() {
         try {
             const previousBlock = await this.blockRepo.findOne({
                 order: { id: 'DESC' },
             })
-            const previousHash = previousBlock?.hash || '0'
+            const previousHash = previousBlock?.hash || 'genesis'
             const newBlock = new Block()
             newBlock.previousHash = previousHash
             newBlock.timestamp = new Date()
             newBlock.transactions = [...this.mempool]
-            newBlock.hash = this.calculateHash(newBlock)
 
             await this.blockRepo.save(newBlock)
 
@@ -58,14 +57,5 @@ export class BlockService {
             throw new Error('Block creation failed');
         }
 
-    }
-
-    private calculateHash(block: Block): string {
-        try {
-            const data = block.previousHash + block.timestamp.toISOString() + JSON.stringify(block.transactions)
-            return createHash('sha256').update(data).digest('hex');
-        } catch (error) {
-            throw new Error('Failed to calculate block hash')
-        }
     }
 }
