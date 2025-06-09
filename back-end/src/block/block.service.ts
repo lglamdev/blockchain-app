@@ -1,17 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { BlockchainService } from "src/blockchain/blockchain.service";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { Block } from "./entities/block.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { createHash } from "crypto";
 import { Transaction } from "src/transaction/entities/transaction.entity";
-import { endWith } from "rxjs";
+import { CreateBlockDto } from "./dto/create-block.dto";
 
 @Injectable()
 export class BlockService {
     private readonly logger = new Logger(BlockchainService.name)
-    private mempool: Transaction[] = []
-    private lastBlockTimestamp = Date.now()
 
     constructor(
         @InjectRepository(Block)
@@ -22,40 +19,55 @@ export class BlockService {
 
     async addTransaction(newTransaction: Transaction) {
         try {
-            this.mempool.push(newTransaction)
-            await this.transRepo.save(newTransaction)
-
-            const currentTime = Date.now()
-
-            if (this.mempool.length > 5 || currentTime - this.lastBlockTimestamp >= 60_000) {
+            await this.transRepo.save(newTransaction);
+            const lastBlock = await this.getLastBlock()
+            
+            if (!lastBlock || lastBlock.transactions.length >= 5 || Date.now() - lastBlock.timestamp.getTime() >= 60000) {
                 await this.createNewBlock()
             }
         } catch (error) {
             this.logger.error('Failed to add transaction or create block', error.stack);
-            this.mempool = this.mempool.filter(t => t !== newTransaction);
             throw new Error('Internal transaction processing error');
         }
     }
 
     async createNewBlock() {
         try {
-            const previousBlock = await this.blockRepo.findOne({
-                order: { id: 'DESC' },
-            })
-            const previousHash = previousBlock?.hash || 'genesis'
-            const newBlock = new Block()
-            newBlock.previousHash = previousHash
-            newBlock.timestamp = new Date()
-            newBlock.transactions = [...this.mempool]
+            const previousBlock = await this.getLastBlock()
+            const previousHash = previousBlock?.hash || '0'
+
+            const newBlockDTO = new CreateBlockDto
+            newBlockDTO.previousHash = previousHash
+            newBlockDTO.transactions = await this.getUnconfirmedTransactions()
+            newBlockDTO.hash = ''
+
+            const newBlock = this.blockRepo.create(newBlockDTO)
 
             await this.blockRepo.save(newBlock)
-
-            this.mempool = []
-            this.lastBlockTimestamp = Date.now()
         } catch (error) {
             this.logger.error('Failed to create new block', error.stack);
             throw new Error('Block creation failed');
         }
-
     }
+
+    async getLastBlock(): Promise<Block | null> {
+        try {
+          const blocks = await this.blockRepo.find({
+            order: { id: 'DESC' },
+            take: 1,
+          });
+      
+          return blocks[0] || null;
+        } catch (error) {
+          this.logger.error('Failed to fetch last block', error.stack);
+          throw new InternalServerErrorException('Unable to retrieve the last block');
+        }
+      }
+      
+    async getUnconfirmedTransactions(): Promise<Transaction[]> {
+        return this.transRepo.find({
+          where: { block: IsNull() },
+          relations: ['block'],
+        });
+      }
 }

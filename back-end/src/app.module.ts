@@ -10,12 +10,16 @@ import { Block } from './block/entities/block.entity';
 import { Transaction } from './transaction/entities/transaction.entity';
 import { BlockchainModule } from './blockchain/blockchain.module';
 import { TransactionLoggerMiddleware } from './middleware/transaction-logget.middleware';
+import { BlockModule } from './block/block.module';
+import { TransactionModule } from './transaction/transaction.module';
 
 @Module({
   imports: [
     UserModule,
     AuthModule,
     BlockchainModule,
+    BlockModule,
+    TransactionModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

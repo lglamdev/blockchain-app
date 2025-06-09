@@ -3,28 +3,21 @@ import { Transaction } from "./entities/transaction.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
-import { User } from "src/user/entities/user.entity";
 
 @Injectable()
 export class TransactionService {
-    private transactionBuffer: Transaction[] = []
-    private lastBlockTimestamp = Date.now()
 
     constructor(
         @InjectRepository(Transaction)
         private transactionRepo: Repository<Transaction>,
-        @InjectRepository(User)
-        private userRepo: Repository<User>,
     ) { }
 
     async createTransaction(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
         try {
-            const newTransaction = this.transactionRepo.create({
-                from: createTransactionDto.from,
-                to: createTransactionDto.to,
-                amount: createTransactionDto.amount,
-                timestamp: Date.now(),
-            })
+            const newTransaction = this.transactionRepo.create(createTransactionDto)
+            if (!newTransaction) {
+                console.log("eeeee")
+            }
             return await this.transactionRepo.save(newTransaction)
         } catch (error) {
             throw new Error('Transaction can not be saved')

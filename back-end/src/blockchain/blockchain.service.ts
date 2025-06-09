@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ethers } from 'ethers';
+import { BlockService } from 'src/block/block.service';
+import { CreateTransactionDto } from 'src/transaction/dto/create-transaction.dto';
+import { Transaction } from 'src/transaction/entities/transaction.entity';
+import { TransactionService } from 'src/transaction/transaction.service';
+
 
 @Injectable()
 export class BlockchainService {
     private provider: ethers.JsonRpcProvider;
     private wallet: ethers.Wallet;
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private transactionService: TransactionService,
+        private blockService: BlockService,
+    ) {
         const infuraKey = this.configService.get<string>('INFURA_KEY');
         const privateKey = this.configService.get<string>('PRIVATE_KEY');
 
@@ -32,7 +41,9 @@ export class BlockchainService {
                 gasLimit: 21000,
             };
             const transaction = await this.wallet.sendTransaction(tx);
-            return await transaction.wait();
+            const newTransEntity = await this.saveTransactionEntity(transaction, amountInEther)
+            const newBlockEntity = await this.saveBlockEntity(newTransEntity)
+            return await transaction.wait()
         } catch (error: any) {
             const balance = await this.provider.getBalance(this.wallet.getAddress());
             const amount = ethers.parseEther(amountInEther);
@@ -49,6 +60,26 @@ export class BlockchainService {
                 console.error('Transaction error:', error);
                 throw new InternalServerErrorException('Transaction failed. Please check the logs.');
             }
+        }
+    }
+
+    private async saveTransactionEntity(transactionResponse: ethers.TransactionResponse, amountInEther: string): Promise<Transaction> {
+        const newTransDTO: CreateTransactionDto = {
+            from: transactionResponse.from,
+            to: transactionResponse.to!,
+            amount: amountInEther,
+        }
+        return await this.transactionService.createTransaction(newTransDTO)
+    }
+
+    private async saveBlockEntity(transaction: Transaction) {
+        const lastBlock = await this.blockService.getLastBlock()
+        const previousHash = lastBlock?.hash || '0'
+
+        if (!lastBlock || lastBlock.transactions.length >= 5 || Date.now() - lastBlock.timestamp.getTime() >= 60000) {
+            return await this.blockService.createNewBlock()
+        } else {
+            return await this.blockService.addTransaction(transaction)
         }
     }
 }

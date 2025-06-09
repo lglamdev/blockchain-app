@@ -1,13 +1,11 @@
 import { Controller, Get, Param, Request } from "@nestjs/common";
 import { TransactionService } from "./transaction.service";
 import { Transaction } from "./entities/transaction.entity";
-import { UserService } from "src/user/user.service";
 
 @Controller('transaction')
 export class TransactionController {
     constructor(
         private transactionService: TransactionService,
-        private userService: UserService
     ) { }
 
     @Get('history')

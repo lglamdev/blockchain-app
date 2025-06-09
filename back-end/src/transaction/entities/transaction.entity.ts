@@ -15,8 +15,8 @@ export class Transaction {
   @Column()
   to: string;
 
-  @Column('decimal')
-  amount: number;
+  @Column()
+  amount: string;
 
   @CreateDateColumn()
   timestamp: Date;
