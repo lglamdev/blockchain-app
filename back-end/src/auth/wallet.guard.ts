@@ -15,10 +15,7 @@ export class WalletGuard implements CanActivate {
     if (!body.to) {
       throw new BadRequestException("Transaction must include receiver's wallet addresses");
     }
-
-    if (user.walletAddress !== body.from) {
-      throw new UnauthorizedException('Wallet mismatch: You cannot send from another wallet');
-    }
+    
     return true;
   }
 }

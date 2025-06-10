@@ -13,7 +13,7 @@ export class AuthService {
   async validateAndLogin(loginDto: LoginUserDto): Promise<{ token: string }> {
     const user = await this.userService.validateUser(loginDto);
 
-    const payload = { sub: user.id, username: user.username, walletAddess: user.walletAddress };
+    const payload = { sub: user.id, username: user.username, walletAddress: user.walletAddress };
     const token = this.jwtService.sign(payload);
 
     return { token };
