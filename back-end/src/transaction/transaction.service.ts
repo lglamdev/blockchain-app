@@ -23,7 +23,7 @@ export class TransactionService {
             throw new Error('Transaction can not be saved')
         }
     }
-
+    
     async findTransactionById(id: number): Promise<Transaction> {
         const transaction = await this.transactionRepo.findOne({
             where: { id }

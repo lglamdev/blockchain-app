@@ -42,7 +42,7 @@ export class BlockchainService {
             };
             const transaction = await this.wallet.sendTransaction(tx);
             const newTransEntity = await this.saveTransactionEntity(transaction, amountInEther)
-            const newBlockEntity = await this.saveBlockEntity(newTransEntity)
+            await this.blockService.addTransaction(newTransEntity);
             return await transaction.wait()
         } catch (error: any) {
             const balance = await this.provider.getBalance(this.wallet.getAddress());
@@ -70,16 +70,5 @@ export class BlockchainService {
             amount: amountInEther,
         }
         return await this.transactionService.createTransaction(newTransDTO)
-    }
-
-    private async saveBlockEntity(transaction: Transaction) {
-        const lastBlock = await this.blockService.getLastBlock()
-        const previousHash = lastBlock?.hash || '0'
-
-        if (!lastBlock || lastBlock.transactions.length >= 5 || Date.now() - lastBlock.timestamp.getTime() >= 60000) {
-            return await this.blockService.createNewBlock()
-        } else {
-            return await this.blockService.addTransaction(transaction)
-        }
     }
 }

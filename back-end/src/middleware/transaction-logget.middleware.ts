@@ -24,6 +24,7 @@ export class TransactionLoggerMiddleware implements NestMiddleware {
             console.log(`From: ${address}`);
             console.log(`To: ${req.body.to}`);
             console.log(`Amount: ${req.body.amount}`);
+            console.log("-------------------------------------------------------");
         }
         next()
     }

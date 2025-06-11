@@ -18,10 +18,4 @@ export class User {
 
   @Column({ unique: true })
   walletAddress: string;
-
-  @OneToMany(() => Transaction, tx => tx.sender)
-  sentTransactions: Transaction[];
-
-  @OneToMany(() => Transaction, tx => tx.receiver)
-  receivedTransactions: Transaction[];
 }

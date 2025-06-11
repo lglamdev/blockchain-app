@@ -32,19 +32,27 @@ export class BlockService {
     }
   }
 
-  async createNewBlock() {
+  private async createNewBlock() {
     try {
       const previousBlock = await this.getLastBlock()
       const previousHash = previousBlock?.hash || '0'
 
+      const transactions = await this.getUnconfirmedTransactions();
+
       const newBlockDTO = new CreateBlockDto
       newBlockDTO.previousHash = previousHash
-      newBlockDTO.transactions = await this.getUnconfirmedTransactions()
+      newBlockDTO.transactions = transactions
       newBlockDTO.hash = this.calculateHash(newBlockDTO)
 
       const newBlock = this.blockRepo.create(newBlockDTO)
 
-      await this.blockRepo.save(newBlock)
+      const savedBlock = await this.blockRepo.save(newBlock)
+
+      for (const transaction of transactions) {
+        transaction.block = savedBlock;
+        await this.transRepo.save(transaction);
+      }
+      return savedBlock
     } catch (error) {
       this.logger.error('Failed to create new block', error.stack);
       throw new Error('Block creation failed');
@@ -68,6 +76,8 @@ export class BlockService {
   async getUnconfirmedTransactions(): Promise<Transaction[]> {
     return this.transRepo.find({
       where: { block: IsNull() },
+      order: { timestamp: 'ASC' },
+      take: 5,
       relations: ['block'],
     });
   }

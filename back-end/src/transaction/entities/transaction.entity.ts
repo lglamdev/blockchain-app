@@ -1,6 +1,5 @@
 
 import { Block } from 'src/block/entities/block.entity';
-import { User } from 'src/user/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 
 
@@ -21,12 +20,6 @@ export class Transaction {
   @CreateDateColumn()
   timestamp: Date;
 
-  @ManyToOne(() => Block, block => block.transactions)
+  @ManyToOne(() => Block, (block) => block.transactions)
   block: Block;
-
-  @ManyToOne(() => User, user => user.sentTransactions)
-  sender: User;
-
-  @ManyToOne(() => User, user => user.receivedTransactions)
-  receiver: User;
 }

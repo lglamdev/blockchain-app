@@ -13,7 +13,7 @@ export class Block {
   @Column()
   hash: string;
 
-  @OneToMany(() => Transaction, tx => tx.block, { cascade: true, eager: true })
+  @OneToMany(() => Transaction, (tx) => tx.block, { cascade: ['insert', 'update'], eager: true })
   transactions: Transaction[];
 
   @CreateDateColumn()

@@ -8,11 +8,4 @@ export class BlockController {
     constructor(
         private readonly blockService: BlockService
     ) { }
-    
-    @Post()
-    @UseInterceptors(BlockHashInterceptor)
-    async createBlock() {
-        return await this.blockService.createNewBlock()
-    }
-
 }
