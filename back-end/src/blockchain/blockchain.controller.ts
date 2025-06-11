@@ -19,4 +19,10 @@ export class BlockchainController {
     sendTransaction(@Body() body: { to: string; amount: string },) {
         return this.blockchainService.sendTransaction(body.to, body.amount);
     }
+    // @UseGuards(AuthGuard('jwt'), WalletGuard)
+    // @Post('send')
+    // @UseInterceptors(BlockHashInterceptor)
+    // sendTransaction(@Body() body: { privateKey: string, to: string; amount: string },) {
+    //     return this.blockchainService.sendTransaction(body.privateKey, body.to, body.amount);
+    // }
 }
