@@ -1,6 +1,6 @@
 import { Controller, Post, UseInterceptors } from "@nestjs/common";
 import { BlockHashInterceptor } from "src/interceptors/block-hash.interceptor";
-import { TransactionService } from "src/transaction/transaction.service";
+import { TransactionService } from "src/modules/transaction/transaction.service";
 import { BlockService } from "./block.service";
 
 @Controller('block')

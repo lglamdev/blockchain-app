@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ethers } from 'ethers';
-import { BlockService } from 'src/block/block.service';
-import { CreateTransactionDto } from 'src/transaction/dto/create-transaction.dto';
-import { Transaction } from 'src/transaction/entities/transaction.entity';
-import { TransactionService } from 'src/transaction/transaction.service';
+import { BlockService } from 'src/modules/block/block.service';
+import { CreateTransactionDto } from 'src/modules/transaction/dto/create-transaction.dto';
+import { Transaction } from 'src/database/entities/transaction.entity';
+import { TransactionService } from 'src/modules/transaction/transaction.service';
 
 
 @Injectable()
@@ -27,8 +27,16 @@ export class BlockchainService {
         this.provider = new ethers.JsonRpcProvider(`https://sepolia.infura.io/v3/${infuraKey}`);
         this.wallet = new ethers.Wallet(privateKey, this.provider);
     }
+
+    //transaction sql
+    //crawl transactions from block in ethers: all transactions and by contract
     async sendTransaction( to: string, amountInEther: string): Promise<any> {
         try {
+            const balance = await this.provider.getBalance(this.wallet.getAddress());
+            const amount = ethers.parseEther(amountInEther);
+            if (balance < amount) {
+                throw new BadRequestException('Insufficient balance to complete the transaction');
+            }
             const tx = {
                 to,
                 value: ethers.parseEther(amountInEther),
@@ -39,11 +47,12 @@ export class BlockchainService {
             await this.blockService.addTransaction(newTransEntity);
             return await transaction.wait()
         } catch (error: any) {
-            const balance = await this.provider.getBalance(this.wallet.getAddress());
-            const amount = ethers.parseEther(amountInEther);
-            if (balance < amount) {
-                throw new BadRequestException('Insufficient balance to complete the transaction');
-            }
+            // const balance = await this.provider.getBalance(this.wallet.getAddress());
+            // const amount = ethers.parseEther(amountInEther);
+            // if (balance < amount) {
+            //     throw new BadRequestException('Insufficient balance to complete the transaction');
+            // }
+            console.log(error)
             if (error.code === 'INSUFFICIENT_FUNDS') {
                 throw new BadRequestException('Not enough ETH to cover the transaction (including gas).');
             } else if (error.code === 'UNCONFIGURED_NAME') {

@@ -1,9 +1,9 @@
 import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
-import { BlockchainService } from "src/blockchain/blockchain.service";
+import { BlockchainService } from "src/modules/blockchain/blockchain.service";
 import { IsNull, Repository } from "typeorm";
-import { Block } from "./entities/block.entity";
+import { Block } from "../../database/entities/block.entity";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Transaction } from "src/transaction/entities/transaction.entity";
+import { Transaction } from "src/database/entities/transaction.entity";
 import { CreateBlockDto } from "./dto/create-block.dto";
 import { createHash } from "crypto";
 
@@ -28,6 +28,7 @@ export class BlockService {
       }
     } catch (error) {
       this.logger.error('Failed to add transaction or create block', error.stack);
+      
       throw new Error('Internal transaction processing error');
     }
   }

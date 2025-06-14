@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Request } from "@nestjs/common";
 import { TransactionService } from "./transaction.service";
-import { Transaction } from "./entities/transaction.entity";
+import { Transaction } from "../../database/entities/transaction.entity";
 
 @Controller('transaction')
 export class TransactionController {

@@ -2,16 +2,16 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user/entities/user.entity';
-import { Block } from './block/entities/block.entity';
-import { Transaction } from './transaction/entities/transaction.entity';
-import { BlockchainModule } from './blockchain/blockchain.module';
+import { User } from './database/entities/user.entity';
+import { Block } from './database/entities/block.entity';
+import { Transaction } from './database/entities/transaction.entity';
+import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { TransactionLoggerMiddleware } from './middleware/transaction-logget.middleware';
-import { BlockModule } from './block/block.module';
-import { TransactionModule } from './transaction/transaction.module';
+import { BlockModule } from './modules/block/block.module';
+import { TransactionModule } from './modules/transaction/transaction.module';
 
 @Module({
   imports: [

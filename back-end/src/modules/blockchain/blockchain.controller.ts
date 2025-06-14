@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { BlockchainService } from './blockchain.service';
 import { AuthGuard } from '@nestjs/passport';
-import { WalletGuard } from 'src/auth/wallet.guard';
+import { WalletGuard } from 'src/modules/auth/wallet.guard';
 import { BlockHashInterceptor } from 'src/interceptors/block-hash.interceptor';
 
 @Controller('blockchain')

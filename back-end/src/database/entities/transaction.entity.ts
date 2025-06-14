@@ -1,5 +1,5 @@
 
-import { Block } from 'src/block/entities/block.entity';
+import { Block } from 'src/database/entities/block.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 
 
