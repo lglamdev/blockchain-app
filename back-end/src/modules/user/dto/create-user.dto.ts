@@ -18,8 +18,4 @@ export class CreateUserDto {
         message: 'Password contains potentially unsafe characters',
     })
     password: string;
-
-    @IsString()
-    @IsNotEmpty()
-    walletAddress: string;
 }

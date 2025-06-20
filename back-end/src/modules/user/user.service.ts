@@ -5,31 +5,32 @@ import { User } from '../../database/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
+import { ethers } from "ethers";
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const { username, email, password, walletAddress } = createUserDto;
+    const { username, email, password } = createUserDto;
     const existing = await this.userRepository.findOne({
-      where: [{ email }, { walletAddress }],
+      where: [{ email }, { username }],
     });
     if (existing) {
-      throw new ConflictException('Email or wallet address already in use');
+      throw new ConflictException('Email or username already in use');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    const wallet = ethers.Wallet.createRandom()
     const user = this.userRepository.create({
       username,
       email,
       password: hashedPassword,
-      walletAddress,
+      walletAddress: wallet.address,
     });
 
     return this.userRepository.save(user);

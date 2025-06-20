@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ethers } from 'ethers';
+import { ethers, TransactionResponse } from 'ethers';
 import { BlockService } from 'src/modules/block/block.service';
 import { CreateTransactionDto } from 'src/modules/transaction/dto/create-transaction.dto';
 import { Transaction } from 'src/database/entities/transaction.entity';
 import { TransactionService } from 'src/modules/transaction/transaction.service';
+import axios from 'axios';
 
 
 @Injectable()
@@ -30,7 +31,7 @@ export class BlockchainService {
 
     //transaction sql
     //crawl transactions from block in ethers: all transactions and by contract
-    async sendTransaction( to: string, amountInEther: string): Promise<any> {
+    async sendTransaction(to: string, amountInEther: string): Promise<any> {
         try {
             const balance = await this.provider.getBalance(this.wallet.getAddress());
             const amount = ethers.parseEther(amountInEther);
@@ -47,22 +48,8 @@ export class BlockchainService {
             await this.blockService.addTransaction(newTransEntity);
             return await transaction.wait()
         } catch (error: any) {
-            // const balance = await this.provider.getBalance(this.wallet.getAddress());
-            // const amount = ethers.parseEther(amountInEther);
-            // if (balance < amount) {
-            //     throw new BadRequestException('Insufficient balance to complete the transaction');
-            // }
-            console.log(error)
-            if (error.code === 'INSUFFICIENT_FUNDS') {
-                throw new BadRequestException('Not enough ETH to cover the transaction (including gas).');
-            } else if (error.code === 'UNCONFIGURED_NAME') {
-                throw new BadRequestException('Invalid recipient address');
-            } else if (error.code === 'INVALID_ARGUMENT') {
-                throw new BadRequestException('Invalid amount.');
-            } else {
-                console.error('Transaction error:', error);
-                throw new InternalServerErrorException('Transaction failed. Please check the logs.');
-            }
+            console.error('Transaction error:' + error.code, error);
+            throw new InternalServerErrorException('Transaction failed. Please check the logs.');
         }
     }
     // constructor(
@@ -92,21 +79,8 @@ export class BlockchainService {
     //         await this.blockService.addTransaction(newTransEntity);
     //         return await transaction.wait()
     //     } catch (error: any) {
-    //         const balance = await this.provider.getBalance(this.wallet.getAddress());
-    //         const amount = ethers.parseEther(amountInEther);
-    //         if (balance < amount) {
-    //             throw new BadRequestException('Insufficient balance to complete the transaction');
-    //         }
-    //         if (error.code === 'INSUFFICIENT_FUNDS') {
-    //             throw new BadRequestException('Not enough ETH to cover the transaction (including gas).');
-    //         } else if (error.code === 'UNCONFIGURED_NAME') {
-    //             throw new BadRequestException('Invalid recipient address');
-    //         } else if (error.code === 'INVALID_ARGUMENT') {
-    //             throw new BadRequestException('Invalid amount.');
-    //         } else {
-    //             console.error('Transaction error:', error);
-    //             throw new InternalServerErrorException('Transaction failed. Please check the logs.');
-    //         }
+    //         console.error('Transaction error:' + error.code, error);
+    // throw new InternalServerErrorException('Transaction failed. Please check the logs.');
     //     }
     // }
 
@@ -114,6 +88,37 @@ export class BlockchainService {
         const balanceWei = await this.provider.getBalance(address);
         return ethers.formatEther(balanceWei);
     }
+
+    async getAllTransactionsByContract(contractAddress: string, startBlock = 8588800, endBlock?: number) {
+        const latestBlock = endBlock ?? await this.provider.getBlockNumber();
+        const result: string[] = [];
+
+        for (let i = startBlock; i <= latestBlock; i++) {
+            const block = await this.provider.getBlock(i, true);
+            if (!block?.transactions) continue;
+
+            const relatedTxs = block.transactions.filter((tx: any) =>
+                tx.to?.toLowerCase() === contractAddress.toLowerCase()
+            );
+            result.push(...relatedTxs);
+        }
+
+        return result;
+    }
+
+    // private async getContractAbi(contractAddress: string): Promise<any> {
+    //     try {
+    //         const etherscanApiKey = this.configService.get<string>('ETHERSCAN_API_KEY')
+    //         const url = `https://api-sepolia.etherscan.io/api?module=contract&action=getabi&address=${contractAddress}&apikey=${etherscanApiKey}`;
+    //         const { data } = await axios.get(url)
+    //         if (data.status !== '1') {
+    //             throw new BadRequestException('Unable to fetch ABI from Etherscan');
+    //         }
+    //         return JSON.parse(data.result);
+    //     } catch (error: any) {
+    //         throw new Error(error)
+    //     }
+    // }
 
     private async saveTransactionEntity(transactionResponse: ethers.TransactionResponse, amountInEther: string): Promise<Transaction> {
         const newTransDTO: CreateTransactionDto = {

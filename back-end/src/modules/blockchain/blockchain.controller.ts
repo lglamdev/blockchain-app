@@ -19,6 +19,11 @@ export class BlockchainController {
     sendTransaction(@Body() body: { to: string; amount: string },) {
         return this.blockchainService.sendTransaction(body.to, body.amount);
     }
+
+    @Get('contract-transactions')
+    getAllTransactionsByContract(@Body() body: { contractAddress: string, startBlock: 8588400, endBlock: number}){
+        return this.blockchainService.getAllTransactionsByContract(body.contractAddress, body.startBlock, body.endBlock)
+    }
     // @UseGuards(AuthGuard('jwt'), WalletGuard)
     // @Post('send')
     // @UseInterceptors(BlockHashInterceptor)
